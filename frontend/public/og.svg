@@ -1,0 +1,21 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0a0a09"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#grid)" opacity="0.3"/>
+  <defs>
+    <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1a3fff" opacity="0.5"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a3fff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#1a3fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="600" cy="315" rx="400" ry="250" fill="url(#glow)"/>
+  <rect x="80" y="80" width="72" height="72" rx="18" fill="#1a3fff"/>
+  <path d="M116 94L136 130H96L116 94Z" fill="none" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M104 124H128" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="174" y="128" font-family="system-ui, sans-serif" font-weight="800" font-size="36" fill="white" letter-spacing="-0.5">Arc Invoice Desk</text>
+  <text x="80" y="310" font-family="system-ui, sans-serif" font-weight="800" font-size="72" fill="white" letter-spacing="-2">Invoice discounting</text>
+  <text x="80" y="390" font-family="system-ui, sans-serif" font-weight="800" font-size="72" fill="#60a5fa" letter-spacing="-2">at settlement speed.</text>
+  <text x="80" y="480" font-family="system-ui, sans-serif" font-weight="400" font-size="28" fill="#888780">Powered by Arc Network · Circle StableFX · CCTP</text>
+</svg>

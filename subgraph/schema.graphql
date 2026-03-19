@@ -1,0 +1,78 @@
+type Invoice @entity {
+  id: ID!
+  tokenId: BigInt!
+  seller: Bytes!
+  faceValue: BigInt!
+  dueDate: BigInt!
+  currency: Bytes!
+  documentHash: Bytes!
+  buyerName: String!
+  description: String!
+  status: String!
+  createdAt: BigInt!
+  settledAmount: BigInt
+  settledAt: BigInt
+  auction: Auction
+}
+
+type Auction @entity {
+  id: ID!
+  invoiceId: BigInt!
+  invoice: Invoice!
+  startTime: BigInt!
+  endTime: BigInt!
+  cleared: Boolean!
+  clearingDiscountBps: BigInt
+  raisedAmount: BigInt
+  advanceAmount: BigInt
+  bids: [Bid!]! @derivedFrom(field: "auction")
+  clearedAt: BigInt
+}
+
+type Bid @entity {
+  id: ID!
+  auction: Auction!
+  lender: Bytes!
+  amount: BigInt!
+  discountBps: BigInt!
+  accepted: Boolean!
+  timestamp: BigInt!
+  yieldEarned: BigInt
+}
+
+type Deposit @entity {
+  id: ID!
+  lender: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type LenderSummary @entity {
+  id: ID!
+  address: Bytes!
+  totalDeposited: BigInt!
+  totalActive: BigInt!
+  totalYieldEarned: BigInt!
+  bidCount: BigInt!
+  updatedAt: BigInt!
+}
+
+type Settlement @entity {
+  id: ID!
+  invoice: Invoice!
+  settledAmount: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ProtocolMetrics @entity {
+  id: ID!
+  totalInvoices: BigInt!
+  totalVolumeUSDC: BigInt!
+  totalAdvancedUSDC: BigInt!
+  totalSettledUSDC: BigInt!
+  totalYieldPaidUSDC: BigInt!
+  activeLenders: BigInt!
+  updatedAt: BigInt!
+}

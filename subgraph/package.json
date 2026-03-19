@@ -1,0 +1,16 @@
+{
+  "name": "invoice-desk-subgraph",
+  "version": "1.0.0",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy:studio": "graph deploy --studio invoice-desk",
+    "deploy:hosted": "graph deploy --product hosted-service YOUR_GITHUB/invoice-desk",
+    "create-local": "graph create --node http://localhost:8020/ invoice-desk",
+    "deploy:local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 invoice-desk"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.73.0",
+    "@graphprotocol/graph-ts": "^0.35.1"
+  }
+}

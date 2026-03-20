@@ -1,6 +1,6 @@
 import Bull from "bull";
 import { getDb } from "../services/db";
-import { executeStableFXSwap } from "../services/stablefx";
+import { executeStableFXSwap } from "../services/stablefx"; // already imported from "../services/stablefx";
 
 export let auctionQueue: Bull.Queue;
 export let settlementQueue: Bull.Queue;

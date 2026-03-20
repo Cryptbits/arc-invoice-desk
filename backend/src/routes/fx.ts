@@ -1,39 +1,39 @@
 import { Router, Request, Response } from "express";
-import { z } from "zod";
-import { getLiveRate, getSwapQuote, getAllRates } from "../services/stablefx";
+import { getAllRates, getLiveRate, getSwapQuote } from "../services/stablefx";
 
 export const fxRoutes = Router();
 
 fxRoutes.get("/rates", async (_req: Request, res: Response) => {
-  const rates = await getAllRates();
-  res.json(rates);
+  try {
+    const rates = await getAllRates();
+    res.json(rates);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-fxRoutes.get("/rates/:from/:to", async (req: Request, res: Response) => {
-  const { from, to } = req.params;
-  const rate = await getLiveRate(from.toUpperCase(), to.toUpperCase());
-  res.json(rate);
+fxRoutes.get("/rate/:from/:to", async (req: Request, res: Response) => {
+  try {
+    const rate = await getLiveRate(req.params.from.toUpperCase(), req.params.to.toUpperCase());
+    res.json(rate);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 fxRoutes.get("/quote", async (req: Request, res: Response) => {
-  const parsed = z
-    .object({
-      from: z.string(),
-      to: z.string(),
-      amount: z.coerce.number().positive(),
-      slippageBps: z.coerce.number().optional(),
-    })
-    .safeParse(req.query);
-
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-
-  const { from, to, amount, slippageBps } = parsed.data;
-  const quote = await getSwapQuote(
-    from.toUpperCase(),
-    to.toUpperCase(),
-    amount,
-    slippageBps
-  );
-
-  res.json(quote);
+  try {
+    const { from, to, amount } = req.query;
+    if (!from || !to || !amount) {
+      return res.status(400).json({ error: "from, to, and amount are required" });
+    }
+    const quote = await getSwapQuote(
+      String(from).toUpperCase(),
+      String(to).toUpperCase(),
+      parseFloat(String(amount))
+    );
+    res.json(quote);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });

@@ -9,24 +9,19 @@ export interface IPFSUploadResult {
   url: string;
 }
 
-export async function uploadToIPFS(
-  buffer: Buffer,
-  filename: string
-): Promise<IPFSUploadResult> {
+export async function uploadToIPFS(buffer: Buffer, filename: string): Promise<IPFSUploadResult> {
   const sha256 = createHash("sha256").update(buffer).digest("hex");
 
+  const blob = new Blob([buffer as unknown as BlobPart], { type: "application/octet-stream" });
   const formData = new FormData();
-  const blob = new Blob([buffer], { type: "application/octet-stream" });
   formData.append("file", blob, filename);
 
-  const response = await fetch(`${IPFS_API}/api/v0/add?pin=true&wrap-with-directory=false`, {
+  const response = await fetch(`${IPFS_API}/api/v0/add?pin=true`, {
     method: "POST",
     body: formData,
   });
 
-  if (!response.ok) {
-    throw new Error(`IPFS upload failed: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`IPFS upload failed: ${response.statusText}`);
 
   const text = await response.text();
   const lines = text.trim().split("\n");
@@ -40,39 +35,17 @@ export async function uploadToIPFS(
   };
 }
 
-export async function uploadJSONToIPFS(
-  data: Record<string, unknown>
-): Promise<IPFSUploadResult> {
+export async function uploadJSONToIPFS(data: Record<string, unknown>): Promise<IPFSUploadResult> {
   const json = JSON.stringify(data, null, 2);
   const buffer = Buffer.from(json, "utf-8");
   return uploadToIPFS(buffer, "metadata.json");
 }
 
 export async function getFromIPFS(cid: string): Promise<Buffer> {
-  const response = await fetch(`${IPFS_API}/api/v0/cat?arg=${cid}`, {
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    throw new Error(`IPFS retrieval failed for CID ${cid}`);
-  }
-
+  const response = await fetch(`${IPFS_API}/api/v0/cat?arg=${cid}`, { method: "POST" });
+  if (!response.ok) throw new Error(`IPFS retrieval failed for CID ${cid}`);
   const arrayBuffer = await response.arrayBuffer();
   return Buffer.from(arrayBuffer);
-}
-
-export async function pinCID(cid: string): Promise<void> {
-  const response = await fetch(`${IPFS_API}/api/v0/pin/add?arg=${cid}`, {
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    console.warn(`Failed to pin CID ${cid}: ${response.statusText}`);
-  }
-}
-
-export function hashDocument(buffer: Buffer): string {
-  return "0x" + createHash("sha256").update(buffer).digest("hex");
 }
 
 export async function isIPFSAvailable(): Promise<boolean> {
@@ -85,4 +58,8 @@ export async function isIPFSAvailable(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export function hashDocument(buffer: Buffer): string {
+  return "0x" + createHash("sha256").update(buffer).digest("hex");
 }

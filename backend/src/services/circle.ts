@@ -2,7 +2,7 @@ let client: any = null;
 
 function isConfigured(): boolean {
   const key = process.env.CIRCLE_API_KEY || "";
-  return key.length > 10 && key !== "your_circle_api_key_here";
+  return key.length > 10 && key !== "your_circle_api_key_here" && key !== "sandbox_key_placeholder";
 }
 
 async function getClient() {
@@ -10,12 +10,15 @@ async function getClient() {
   if (client) return client;
   try {
     const sdk = await import("@circle-fin/developer-controlled-wallets");
-    const init = sdk.initiateUserControlledWalletsClient || (sdk as any).default?.initiateUserControlledWalletsClient;
+    const init =
+      (sdk as any).initiateDeveloperControlledWalletsClient ||
+      (sdk as any).initiateUserControlledWalletsClient ||
+      (sdk as any).default?.initiateDeveloperControlledWalletsClient;
     if (typeof init === "function") {
       client = init({ apiKey: process.env.CIRCLE_API_KEY! });
     }
   } catch {
-    console.warn("[Circle] SDK import failed — wallet features disabled");
+    console.warn("Circle SDK unavailable");
   }
   return client;
 }
@@ -28,23 +31,11 @@ export async function createWallet(walletSetId: string, userAddress: string) {
       walletSetId,
       blockchains: ["ARC"],
       count: 1,
-      metadata: [{ name: `Invoice Desk - ${userAddress}` }],
+      metadata: [{ name: `Arc Invoice Desk - ${userAddress}` }],
     });
     return res.data?.wallets?.[0] || null;
-  } catch (e: any) {
-    console.warn("[Circle] createWallet failed:", e?.message);
-    return null;
-  }
-}
-
-export async function getWalletBalance(walletId: string) {
-  const c = await getClient();
-  if (!c) return [];
-  try {
-    const res = await c.getWalletTokenBalance({ id: walletId });
-    return res.data?.tokenBalances || [];
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -60,8 +51,7 @@ export async function transferUSDC(walletId: string, destinationAddress: string,
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
     return res.data?.transaction || null;
-  } catch (e: any) {
-    console.warn("[Circle] transferUSDC failed:", e?.message);
+  } catch {
     return null;
   }
 }

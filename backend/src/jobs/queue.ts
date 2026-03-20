@@ -105,7 +105,7 @@ export async function initQueue() {
         fromCurrency: paymentCurrency,
         toCurrency: "USDC",
         fromAmount: paymentAmount,
-        minToAmount: paymentAmount * 0.995,
+        ,
         walletId: invoiceResult.rows[0].seller_wallet_id || "demo",
       });
       usdcAmount = swap.toAmount;

@@ -1,6 +1,6 @@
 import Bull from "bull";
 import { getDb } from "../services/db";
-import { executeStableFXSwap } from "../services/stablefx"; // already imported from "../services/stablefx";
+import { executeStableFXSwap } from "../services/stablefx";
 
 export let auctionQueue: Bull.Queue;
 export let settlementQueue: Bull.Queue;
@@ -105,7 +105,6 @@ export async function initQueue() {
         fromCurrency: paymentCurrency,
         toCurrency: "USDC",
         fromAmount: paymentAmount,
-        ,
         walletId: invoiceResult.rows[0].seller_wallet_id || "demo",
       });
       usdcAmount = swap.toAmount;

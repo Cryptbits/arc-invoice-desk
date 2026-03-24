@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 
 const WalletProviders = dynamic(
-  () => import("./WalletProviders").then(m => ({ default: m.WalletProviders })),
+  () => import("./WalletProviders").then((m) => ({ default: m.WalletProviders })),
   { ssr: false }
 );
 

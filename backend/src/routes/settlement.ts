@@ -10,11 +10,9 @@ settlementRoutes.get("/quote/:invoiceId", async (req: Request, res: Response) =>
     const db = getDb();
     const invoice = await db.query("SELECT * FROM invoices WHERE id = $1", [req.params.invoiceId]);
     if (!invoice.rows[0]) return res.status(404).json({ error: "Invoice not found" });
-
     const inv = invoice.rows[0];
     const paymentCurrency = (req.query.currency as string)?.toUpperCase() || inv.currency;
     const quote = await getSwapQuote(paymentCurrency, "USDC", parseFloat(inv.face_value));
-
     res.json({
       invoiceId: req.params.invoiceId,
       faceValue: inv.face_value,
@@ -44,16 +42,15 @@ settlementRoutes.post("/execute", async (req: Request, res: Response) => {
     const { invoiceId, paymentCurrency, paymentAmount, txHash } = parsed.data;
     const db = getDb();
 
-    const invoice = await db.query(
-      "SELECT * FROM invoices WHERE id = $1 AND status IN ('funded', 'auctioning', 'pending')",
+    const invoiceRes = await db.query(
+      "SELECT * FROM invoices WHERE id = $1 AND status NOT IN ('settled', 'cancelled')",
       [invoiceId]
     );
-    if (!invoice.rows[0]) {
-      return res.status(404).json({ error: "Invoice not found" });
+    if (!invoiceRes.rows[0]) {
+      return res.status(404).json({ error: "Invoice not found or already settled" });
     }
 
-    const inv = invoice.rows[0];
-    const faceValue = parseFloat(inv.face_value);
+    const inv = invoiceRes.rows[0];
 
     let usdcAmount = paymentAmount;
     let fxRate = 1.0;
@@ -71,17 +68,40 @@ settlementRoutes.post("/execute", async (req: Request, res: Response) => {
     const protocolFee = usdcAmount * 0.003;
     const netRepayment = usdcAmount - protocolFee;
 
-    const acceptedBids = await db.query(
-      "SELECT * FROM bids WHERE invoice_id = $1 AND accepted = true",
+    // Accept ALL bids on this invoice that are not yet accepted
+    await db.query(
+      "UPDATE bids SET accepted = true, status = 'accepted' WHERE invoice_id = $1 AND accepted = false",
       [invoiceId]
     );
 
-    for (const bid of acceptedBids.rows) {
-      const yieldAmount = parseFloat(bid.amount) * (bid.discount_bps / 10000);
+    // Get all bids (now all accepted)
+    const allBids = await db.query(
+      "SELECT * FROM bids WHERE invoice_id = $1",
+      [invoiceId]
+    );
+
+    let totalBidAmount = 0;
+    for (const bid of allBids.rows) {
+      totalBidAmount += parseFloat(bid.amount);
+    }
+
+    // Distribute yield to each lender proportional to their bid
+    for (const bid of allBids.rows) {
+      const bidAmount = parseFloat(bid.amount);
+      const yieldAmount = bidAmount * (bid.discount_bps / 10000);
+      const proportion = totalBidAmount > 0 ? bidAmount / totalBidAmount : 0;
+      const repayment = netRepayment * proportion;
+
       await db.query(
-        `UPDATE lenders SET active_amount = GREATEST(0, active_amount - $1), total_yield_earned = total_yield_earned + $2 WHERE address = $3`,
-        [bid.amount, yieldAmount, bid.lender_address]
+        `UPDATE lenders 
+         SET active_amount = GREATEST(0, active_amount - $1),
+             total_yield_earned = total_yield_earned + $2,
+             updated_at = NOW()
+         WHERE address = $3`,
+        [bidAmount, yieldAmount, bid.lender_address]
       );
+
+      console.log(`[Settlement] Lender ${bid.lender_address} — repaid $${repayment.toFixed(2)} + yield $${yieldAmount.toFixed(2)}`);
     }
 
     const auctionId = inv.auction_id || Date.now();
@@ -97,17 +117,19 @@ settlementRoutes.post("/execute", async (req: Request, res: Response) => {
       [invoiceId, auctionId, paymentCurrency, paymentAmount, usdcAmount, fxRate, protocolFee, txHash || null]
     );
 
-    console.log(`[Settlement] Invoice ${invoiceId} settled — $${netRepayment.toFixed(2)} USDC distributed`);
+    console.log(`[Settlement] Invoice ${invoiceId} settled — $${netRepayment.toFixed(2)} USDC, ${allBids.rows.length} lender(s) paid`);
 
     res.json({
       success: true,
       invoiceId,
+      status: "settled",
       paymentCurrency,
       paymentAmount,
       usdcRepaid: parseFloat(netRepayment.toFixed(2)),
-      fxRate,
+      fxRate: parseFloat(fxRate.toFixed(4)),
       feeCollected: parseFloat(protocolFee.toFixed(2)),
-      status: "settled",
+      lendersPaid: allBids.rows.length,
+      totalYieldPaid: parseFloat(allBids.rows.reduce((s: number, b: any) => s + parseFloat(b.amount) * (b.discount_bps / 10000), 0).toFixed(2)),
     });
   } catch (e: any) {
     console.error("[Settlement] Error:", e.message);
@@ -120,16 +142,11 @@ settlementRoutes.get("/status/:invoiceId", async (req: Request, res: Response) =
     const db = getDb();
     const invoice = await db.query("SELECT * FROM invoices WHERE id = $1", [req.params.invoiceId]);
     if (!invoice.rows[0]) return res.status(404).json({ error: "Not found" });
-
     const settlement = await db.query(
       "SELECT * FROM settlements WHERE invoice_id = $1 ORDER BY settled_at DESC LIMIT 1",
       [req.params.invoiceId]
     );
-
-    res.json({
-      invoice: invoice.rows[0],
-      settlement: settlement.rows[0] || null,
-    });
+    res.json({ invoice: invoice.rows[0], settlement: settlement.rows[0] || null });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -140,8 +157,7 @@ settlementRoutes.get("/history", async (_req: Request, res: Response) => {
     const db = getDb();
     const result = await db.query(
       `SELECT s.*, i.buyer_name, i.seller_address, i.currency
-       FROM settlements s
-       JOIN invoices i ON s.invoice_id = i.id
+       FROM settlements s JOIN invoices i ON s.invoice_id = i.id
        ORDER BY s.settled_at DESC LIMIT 50`
     );
     res.json(result.rows);

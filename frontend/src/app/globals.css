@@ -394,42 +394,119 @@ body {
   background: var(--arc-dim);
 }
 
+}
+
+}
+
+/* Mobile responsive — 768px and below */
 @media (max-width: 768px) {
-  .sidebar-hidden { display: none !important; }
+
+  .dashboard-layout {
+    flex-direction: column !important;
+  }
 
   aside {
     width: 100% !important;
     height: auto !important;
-    flex-direction: row !important;
-    padding: 12px 16px !important;
+    flex-direction: column !important;
+    padding: 0 !important;
     border-right: none !important;
     border-bottom: 1px solid var(--border) !important;
-    flex-wrap: wrap;
-    gap: 8px !important;
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: 100;
+    background: var(--surface);
   }
 
-  aside > a:first-child { padding-bottom: 0 !important; }
-  aside > div:last-child { display: none; }
-  aside .nav-item { padding: 7px 10px; font-size: 12px; }
+  .mobile-nav-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+  }
 
-  .dashboard-layout {
-    flex-direction: column !important;
+  .mobile-nav-body {
+    display: none;
+    flex-direction: column;
+    padding: 0 12px 12px;
+    gap: 2px;
+    border-top: 1px solid var(--border);
+  }
+
+  .mobile-nav-body.open {
+    display: flex !important;
+  }
+
+  aside .nav-item {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  aside > div:last-child {
+    display: none !important;
   }
 
   main {
     padding: 16px !important;
   }
 
-  .stat-tile { padding: 14px 16px !important; }
+  .stat-tile {
+    padding: 14px 16px !important;
+  }
 
-  table { font-size: 12px !important; }
-  td, th { padding: 10px 12px !important; }
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  td, th {
+    padding: 10px 14px !important;
+  }
+
+  h1 { font-size: 20px !important; }
+
+  .btn-primary, .btn-ghost {
+    font-size: 13px !important;
+  }
 }
 
+/* Small phones — 480px and below */
 @media (max-width: 480px) {
+  main { padding: 12px !important; }
   h1 { font-size: 18px !important; }
-  .btn-primary, .btn-ghost { font-size: 12px !important; padding: 9px 14px !important; }
+  .stat-tile { padding: 12px 14px !important; }
+  .stat-tile p:nth-child(2) { font-size: 20px !important; }
+}
+
+/* Desktop sidebar — always visible on large screens */
+.desktop-sidebar {
+  display: flex;
+  width: 224px;
+  flex-shrink: 0;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Mobile nav elements hidden on desktop */
+.mobile-nav-header { display: none; }
+.mobile-nav-body   { display: none; }
+
+@media (max-width: 768px) {
+  .desktop-sidebar  { display: none !important; }
+  .mobile-nav-header { display: flex !important; }
+
+  aside {
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface);
+  }
 }

@@ -5,8 +5,6 @@
 Arc Invoice Desk is a fully functional invoice financing marketplace where businesses turn unpaid invoices into instant USDC liquidity. Lenders compete in Dutch auctions for the best rate. Circle StableFX settles payments in any stablecoin. Everything confirms on Arc Network in under one second.
 
 Live demo: [arcinvoicedesk.vercel.app](https://arcinvoicedesk.vercel.app)
-Backend API: [arc-invoice-desk-api.onrender.com/health](https://arc-invoice-desk-api.onrender.com/health)
-
 ---
 
 ## Why Arc makes this possible
